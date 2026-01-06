@@ -1,0 +1,42 @@
+@CatalogService.Api_HostAddress = http://localhost:5234
+
+GET {{CatalogService.Api_HostAddress}}/products
+Accept: application/json
+
+###
+
+GET {{CatalogService.Api_HostAddress}}/products/product-1
+Accept: application/json
+
+###
+
+GET {{CatalogService.Api_HostAddress}}/products/search?q=Laptop
+Accept: application/json
+
+###
+
+POST {{CatalogService.Api_HostAddress}}/products
+Content-Type: application/json
+
+{
+    "name": "Monitor",
+    "description": "4K Ultra HD Monitor",
+    "price": 400.00,
+    "imageUri": "https://placehold.co/600x400?text=Monitor"
+}
+
+###
+
+PUT {{CatalogService.Api_HostAddress}}/products/product-1
+Content-Type: application/json
+
+{
+    "name": "Updated Laptop",
+    "description": "Updated high-end gaming laptop",
+    "price": 1600.00,
+    "imageUri": "https://placehold.co/600x400?text=Updated+Laptop"
+}
+
+###
+
+DELETE {{CatalogService.Api_HostAddress}}/products/product-3

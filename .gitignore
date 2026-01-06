@@ -1,0 +1,89 @@
+## .NET / Visual Studio
+*.swp
+*.*~
+project.lock.json
+.DS_Store
+*.pyc
+nupkg/
+*.user
+*.suo
+*.cache
+*.docstates
+_ReSharper*/
+*.sln.ide
+*.sln.docstates
+[Bb]in/
+[Oo]bj/
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.[Pp]ublish.xml
+*.azurePubxml
+*.pubxml
+*.publishproj
+.vs/
+.vscode/
+*.userprefs
+*.nupkg
+*.snupkg
+
+## Build Results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## Rider
+.idea/
+*.sln.iml
+
+## User-specific files
+*.rsuser
+*.userosscache
+*.sln.docstates
+
+## Docker
+docker-compose.override.yml
+.dockerignore
+
+## Aspire
+**/obj/project.assets.json
+**/obj/project.nuget.cache
+**/bin/Debug/**/*
+**/bin/Release/**/*
+.aspire/
+
+## Test Coverage
+*.coverage
+*.coveragexml
+
+## NuGet Packages
+*.nupkg
+*.snupkg
+**/packages/*
+!**/packages/build/
+*.nuget.props
+*.nuget.targets
+
+## Migration
+**/Migrations/
+
+## Environment Variables
+.env
+.env.local
+.env.*.local
+
+## OS Generated
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/

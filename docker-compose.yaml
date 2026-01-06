@@ -1,0 +1,176 @@
+version: '3.8'
+
+services:
+  # SQL Server
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: eshop-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong@Passw0rd
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - eshop-network
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: eshop-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - eshop-network
+
+  # RabbitMQ
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: eshop-rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - eshop-network
+
+  # Kafka
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: eshop-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+    networks:
+      - eshop-network
+
+  # Zookeeper (Kafka dependency)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: eshop-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+    networks:
+      - eshop-network
+
+  # Order Service
+  orderservice:
+    build:
+      context: .
+      dockerfile: src/OrderService.Api/Dockerfile
+    container_name: eshop-orderservice
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__OrderDb=Server=sqlserver,1433;Database=OrderDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;
+      - ConnectionStrings__Redis=redis:6379
+      - ConnectionStrings__RabbitMQ=amqp://guest:guest@rabbitmq:5672
+      - ConnectionStrings__Kafka=kafka:9092
+    ports:
+      - "5001:8080"
+    depends_on:
+      - sqlserver
+      - redis
+      - rabbitmq
+      - kafka
+    networks:
+      - eshop-network
+
+  # Inventory Service
+  inventoryservice:
+    build:
+      context: .
+      dockerfile: src/InventoryService.Api/Dockerfile
+    container_name: eshop-inventoryservice
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__RabbitMQ=amqp://guest:guest@rabbitmq:5672
+      - ConnectionStrings__Kafka=kafka:9092
+    ports:
+      - "5002:8080"
+    depends_on:
+      - rabbitmq
+      - kafka
+    networks:
+      - eshop-network
+
+  # Payment Service
+  paymentservice:
+    build:
+      context: .
+      dockerfile: src/PaymentService.Api/Dockerfile
+    container_name: eshop-paymentservice
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__RabbitMQ=amqp://guest:guest@rabbitmq:5672
+      - ConnectionStrings__Kafka=kafka:9092
+    ports:
+      - "5003:8080"
+    depends_on:
+      - rabbitmq
+      - kafka
+    networks:
+      - eshop-network
+
+  # Notification Service
+  notificationservice:
+    build:
+      context: .
+      dockerfile: src/NotificationService.Worker/Dockerfile
+    container_name: eshop-notificationservice
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+      - ConnectionStrings__Kafka=kafka:9092
+    depends_on:
+      - kafka
+    networks:
+      - eshop-network
+
+  # Gateway API
+  gateway:
+    build:
+      context: .
+      dockerfile: src/Gateway.Api/Dockerfile
+    container_name: eshop-gateway
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Services__OrderService=http://orderservice:8080
+      - Services__InventoryService=http://inventoryservice:8080
+      - Services__PaymentService=http://paymentservice:8080
+    ports:
+      - "5000:8080"
+    depends_on:
+      - orderservice
+      - inventoryservice
+      - paymentservice
+    networks:
+      - eshop-network
+
+networks:
+  eshop-network:
+    driver: bridge
+
+volumes:
+  sqlserver_data:
+  redis_data:
+  rabbitmq_data:
+  zookeeper_data:
